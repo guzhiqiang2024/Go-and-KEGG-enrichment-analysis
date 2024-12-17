@@ -1,0 +1,52 @@
+# 加载必要的包
+library(readxl)
+library(ggplot2)
+
+# 读取Excel文件
+file_path <- "C:/科研学习/+++本人所投文章/沼液中有机物对微藻的作用机制研究--目前撰写中/文章/2024.05.19修改/图7 R绘图材料/EA-Pvalue.xlsx"
+data <- read_excel(file_path)
+
+# 打印数据框的结构，确认包含哪些列
+str(data)
+
+# 设置因子水平顺序为数据框中 KO_name 列的实际顺序，并反向调换顺序
+data$KO_name <- factor(data$KO_name, levels = rev(unique(data$KO_name)))
+
+# 查看因子水平顺序
+print(levels(data$KO_name))
+
+# 确定唯一的 Group 列值
+unique_groups <- unique(data$Group)
+
+# 设置颜色与每个 Group 值关联
+Color <- setNames(c("#ff3c41","#fcd000","#47cf73","#0ebeff", "#d3d3d3", "#ffa500", "#8a2be2")[1:length(unique_groups)], unique_groups)
+
+# 创建棒棒糖图
+p <- ggplot(data, aes(x = Pvalue, y = KO_name)) +
+  # 添加点
+  geom_point(aes(color = Group), size = 10) +
+  # 添加点的外圈
+  geom_point(aes(color = Group), size = 12, shape = 21, fill = NA) +
+  # 设定颜色
+  scale_color_manual(values = Color) +
+  # 设置主题
+  theme_classic() +
+  # 设置图例位置和样式
+  theme(legend.position = "none",  # 删除图例
+        panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+        axis.line = element_line(color = "black"),
+        panel.grid.major = element_line(color = "grey", linewidth = 0.5),
+        panel.grid.minor = element_line(color = "grey", linewidth = 0.25),
+        axis.text.y = element_text(size = 0),  # 设置y轴标签文本为空字符串
+        axis.title.x = element_text(size = 18, color = "black"),  # 设置x轴标题加粗和字体大小
+        axis.text.x = element_text(size = 20, color = "black")) +  # 设置x轴标签字体大小和颜色
+  # 设置x轴范围
+  xlim(0, 0.01) +
+  # 设置坐标轴标签
+  labs(x = "P-value", y = "")  # 删除y轴标签
+
+# 显示图形
+print(p)
+
+# 保存图像
+ggsave("EA-P.pdf", plot = p, width = 4, height = 10)

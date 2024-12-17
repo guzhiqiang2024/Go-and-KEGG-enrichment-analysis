@@ -1,0 +1,43 @@
+# 设置工作环境
+rm(list = ls())
+setwd("C:/Users/guzhiqiang/Desktop")
+
+# 安装并加载必要的R包
+install.packages("tidyr")  # 安装 tidyr 包
+library(readxl)  # Read Excel Files
+library(ggplot2) # Create Elegant Data Visualisations Using the Grammar of Graphics
+library(tidyr)   # Tidy Messy Data
+
+# 读取Excel文件
+file_path <- "C:/科研学习/+++本人所投文章/沼液中有机物对微藻的作用机制研究--目前撰写中/文章/2024.05.19修改/图7 R绘图材料/NB-Log2FC-2.xlsx"
+df <- read_excel(file_path)
+
+# 打印数据框的结构，确认包含哪些列
+str(df)
+
+# 确保 Group 和 KO_name 列的因子级别按照需要的顺序排列
+df$Group <- factor(df$Group, levels = c("Carbon fixation", "Fatty acid degradation", "TCA cycle", "Oxidative phosphorylation"))
+df$KO_name <- factor(df$KO_name, levels = rev(unique(df$KO_name)))
+
+# 检查整理后的数据框结构
+str(df)
+
+# 创建条形图
+p <- ggplot(df, aes(x = Log2FC, y = KO_name, fill = Group)) +
+  geom_col() +
+  facet_grid(~variable) +
+  labs(fill = NULL, y = NULL, x = "Log2FC") +
+  theme_bw() +
+  theme(axis.text.y = element_text(size = 15, color = "black", face = "italic"), 
+        axis.text.x = element_text(size = 20, color = "black", angle = 0, vjust = 0.5, hjust = 0),  # 设置x轴标签水平方向,
+        strip.text = element_text(size = 15, color = "black"),
+        legend.text = element_text(size = 15, color = "black"),
+        axis.title.x = element_text(size = 14, color = "black")) +
+  scale_fill_manual(values = c("#f26115","#023f75","#ff717f","#4c211b"),
+                    guide = guide_legend(keywidth = 1.5, keyheight = 7))
+
+# 显示图形
+print(p)
+
+# 保存图像
+ggsave("EA-Log2FC.pdf", plot = p, width = 4, height = 10)

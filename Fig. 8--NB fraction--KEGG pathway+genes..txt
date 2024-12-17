@@ -1,0 +1,104 @@
+# 安装并加载必要的包
+if (!requireNamespace("readxl", quietly = TRUE)) {
+  install.packages("readxl", repos = "https://mirrors.tuna.tsinghua.edu.cn/CRAN/")
+}
+if (!requireNamespace("ggplot2", quietly = TRUE)) {
+  install.packages("ggplot2", repos = "https://mirrors.tuna.tsinghua.edu.cn/CRAN/")
+}
+
+library(readxl)
+library(ggplot2)
+
+# 读取Excel文件
+file_path <- "C:/科研学习/+++本人所投文章/沼液中有机物对微藻的作用机制研究--目前撰写中/文章/2024.05.19修改/图7 R绘图材料/KEGG富集--NB主要通路.xlsx"
+
+data <- tryCatch(
+  {
+    read_excel(file_path, sheet = 1)
+  },
+  error = function(e) {
+    cat("Error: Unable to read the Excel file. Please check the file path and format.\n")
+    NULL
+  }
+)
+
+# 检查数据是否成功读取
+if (is.null(data)) {
+  stop("Failed to read the Excel file.")
+}
+
+# 查看数据框的列名，确认列名是否正确
+print(names(data))
+
+# 确保正确读取数据的前几行，确认读取成功
+print(head(data))
+
+# 确保数据框不为空
+if (nrow(data) == 0) {
+  stop("Data frame is empty.")
+}
+
+# 打印数据框的结构，确认包含哪些列
+str(data)
+
+# 设置因子水平顺序为原始顺序
+data$Description <- factor(data$Description, levels = unique(data$Description))
+
+# 基础富集条形图绘制
+p <- ggplot(data) +
+  geom_bar(aes(x = -log10(Pvalue), y = Description, fill = Cluster),
+           width = 0.5,  # 柱子宽度调整
+           stat = 'identity') +
+  theme_classic() +
+  theme(axis.text.y = element_blank(),  # 去掉y轴标签
+        axis.title.y = element_blank())  # 去掉y轴标题
+
+# 调整x轴原点与y轴相切
+p1 <- p + scale_x_continuous(expand = c(0, 0))
+
+# 将GO terms标签叠加到柱子上，并调整X轴原点与Y轴相切
+p2 <- p1 +
+  geom_text(data = data,  # 确保这里使用的是 data 数据框
+            aes(x = 0,  # 将标签放置在 y 轴位置的左侧
+                y = Description,
+                label = Description),
+            size = 5,   # 文本标签大小
+            hjust = 0,  # 左对齐
+            nudge_x = 0.05)  # 微调位置，使其与 y 轴标签对齐
+
+# 将Marker基因信息添加到GO terms标签信息下
+p3 <- p2 +
+  geom_text(data = data,
+            aes(x = 0.05, y = Description, label = geneID, color = Cluster),
+            size = 4.5,
+            fontface = 'italic', # geneID斜体
+            hjust = 0,
+            vjust = 2) # 垂直偏移，调整文本向下
+
+# 主标题和X/Y轴标题修改
+p4 <- p3 +
+  labs(x = '-Log10P',
+       y = 'Metabolism Genetic Information Processing', # 用空格控制间隙，多次调整直至合适
+       title = 'NB_vs_Control')
+
+# 主题自定义
+mytheme <- theme(
+  legend.position = 'bottom',  # 将图例置于底部
+  legend.direction = 'horizontal',  # 水平排布图例
+  plot.title = element_text(size = 14, face = 'bold'),
+  axis.title = element_text(size = 13, face = 'bold'),
+  axis.text = element_text(size = 13, face = 'bold'),
+  axis.ticks.y = element_blank())
+
+p5 <- p4 + mytheme
+
+# 自定义配色
+mycol <- c('#00A00F', '#00A1D5B2', '#ee7b42')  # 三种颜色
+
+p6 <- p5 +
+  scale_fill_manual(values = mycol) +
+  scale_color_manual(values = mycol)
+
+# 显示图形
+print(p6)
+
